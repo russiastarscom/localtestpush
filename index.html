@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push уведомления</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: white;
+            color: #764ba2;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Тестовые Push уведомления</h1>
+        <p>Нажмите кнопку для запроса разрешения</p>
+        
+        <button id="requestPermissionBtn" onclick="requestNotificationPermission()">
+            Разрешить уведомления
+        </button>
+        
+        <button id="sendNotificationBtn" onclick="sendNotification()" disabled>
+            Отправить тестовое уведомление
+        </button>
+        
+        <div id="status">
+            Статус: Ожидание разрешения...
+        </div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const requestBtn = document.getElementById('requestPermissionBtn');
+        const sendBtn = document.getElementById('sendNotificationBtn');
+
+        // Проверяем текущий статус разрешений
+        function checkPermissionStatus() {
+            if (!('Notification' in window)) {
+                statusDiv.textContent = 'Статус: Ваш браузер не поддерживает push уведомления';
+                requestBtn.disabled = true;
+                return false;
+            }
+
+            if (Notification.permission === 'granted') {
+                statusDiv.textContent = '✅ Уведомления разрешены';
+                sendBtn.disabled = false;
+                requestBtn.disabled = true;
+                return true;
+            } else if (Notification.permission === 'denied') {
+                statusDiv.textContent = '❌ Уведомления заблокированы. Разблокируйте в настройках браузера';
+                requestBtn.disabled = true;
+                sendBtn.disabled = true;
+                return false;
+            } else {
+                statusDiv.textContent = '⏳ Ожидание разрешения...';
+                return false;
+            }
+        }
+
+        // Запрос разрешения на уведомления
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert('Ваш браузер не поддерживает уведомления');
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    statusDiv.textContent = '✅ Уведомления разрешены';
+                    sendBtn.disabled = false;
+                    requestBtn.disabled = true;
+                    
+                    // Отправляем тестовое уведомление сразу после разрешения
+                    sendNotification();
+                } else if (permission === 'denied') {
+                    statusDiv.textContent = '❌ Уведомления заблокированы';
+                    sendBtn.disabled = true;
+                }
+            });
+        }
+
+        // Отправка тестового уведомления
+        function sendNotification() {
+            if (Notification.permission !== 'granted') {
+                alert('Нет разрешения на отправку уведомлений');
+                return;
+            }
+
+            // Опции уведомления
+            const options = {
+                body: 'Это тестовое push уведомление!',
+                icon: 'https://via.placeholder.com/128/764ba2/ffffff?text=Push',
+                badge: 'https://via.placeholder.com/32/764ba2/ffffff?text=!',
+                vibrate: [200, 100, 200],
+                tag: 'test-notification',
+                renotify: true,
+                requireInteraction: false,
+                data: {
+                    date: new Date(),
+                    url: window.location.href
+                },
+                actions: [
+                    {
+                        action: 'open',
+                        title: 'Открыть сайт'
+                    },
+                    {
+                        action: 'close',
+                        title: 'Закрыть'
+                    }
+                ]
+            };
+
+            // Создаем и показываем уведомление
+            const notification = new Notification('Привет! 👋', options);
+
+            // Обработчики событий уведомления
+            notification.addEventListener('click', () => {
+                console.log('Уведомление нажато');
+                window.focus();
+                notification.close();
+            });
+
+            notification.addEventListener('close', () => {
+                console.log('Уведомление закрыто');
+            });
+
+            notification.addEventListener('show', () => {
+                console.log('Уведомление показано');
+            });
+
+            notification.addEventListener('error', (err) => {
+                console.error('Ошибка уведомления:', err);
+            });
+
+            statusDiv.textContent = '✅ Уведомление отправлено! Проверьте экран.';
+            
+            // Возвращаем статус через 3 секунды
+            setTimeout(() => {
+                checkPermissionStatus();
+            }, 3000);
+        }
+
+        // Проверяем статус при загрузке страницы
+        document.addEventListener('DOMContentLoaded', checkPermissionStatus);
+
+        // Дополнительно: демонстрация Service Worker для настоящих push (опционально)
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('Service Worker не зарегистрирован (это нормально для демо):', err);
+            });
+        }
+    </script>
+
+    <!-- Простой Service Worker для настоящих push (опционально) -->
+    <script id="sw-script">
+        // Это будет работать только если создать отдельный файл sw.js
+        // Содержимое sw.js:
+        /*
+        self.addEventListener('push', function(event) {
+            const options = {
+                body: event.data ? event.data.text() : 'Новое уведомление',
+                icon: 'icon.png',
+                badge: 'badge.png'
+            };
+            event.waitUntil(
+                self.registration.showNotification('Push уведомление', options)
+            );
+        });
+        */
+    </script>
+</body>
+</html>
