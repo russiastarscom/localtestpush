@@ -22,6 +22,8 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             backdrop-filter: blur(10px);
+            max-width: 500px;
+            width: 90%;
         }
         button {
             padding: 12px 24px;
@@ -44,15 +46,24 @@
         }
         #status {
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             background: rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            word-break: break-word;
+        }
+        .info {
+            font-size: 14px;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📱 Тестовые Push уведомления</h1>
+        <h1>📱 Push уведомления</h1>
         <p>Нажмите кнопку для запроса разрешения</p>
         
         <button id="requestPermissionBtn" onclick="requestNotificationPermission()">
@@ -66,6 +77,11 @@
         <div id="status">
             Статус: Ожидание разрешения...
         </div>
+        
+        <div class="info">
+            ℹ️ Простые уведомления без Service Worker<br>
+            <small>Работает во всех современных браузерах</small>
+        </div>
     </div>
 
     <script>
@@ -73,141 +89,137 @@
         const requestBtn = document.getElementById('requestPermissionBtn');
         const sendBtn = document.getElementById('sendNotificationBtn');
 
-        // Проверяем текущий статус разрешений
-        function checkPermissionStatus() {
+        // Проверяем поддержку уведомлений
+        function checkNotificationSupport() {
             if (!('Notification' in window)) {
-                statusDiv.textContent = 'Статус: Ваш браузер не поддерживает push уведомления';
+                statusDiv.textContent = '❌ Ваш браузер не поддерживает уведомления';
                 requestBtn.disabled = true;
                 return false;
             }
+            return true;
+        }
+
+        // Проверяем текущий статус разрешений
+        function checkPermissionStatus() {
+            if (!checkNotificationSupport()) return;
 
             if (Notification.permission === 'granted') {
-                statusDiv.textContent = '✅ Уведомления разрешены';
+                statusDiv.innerHTML = '✅ Уведомления разрешены<br><small>Можете отправлять уведомления</small>';
                 sendBtn.disabled = false;
                 requestBtn.disabled = true;
                 return true;
             } else if (Notification.permission === 'denied') {
-                statusDiv.textContent = '❌ Уведомления заблокированы. Разблокируйте в настройках браузера';
+                statusDiv.innerHTML = '❌ Уведомления заблокированы<br><small>Разблокируйте в настройках браузера</small>';
                 requestBtn.disabled = true;
                 sendBtn.disabled = true;
                 return false;
             } else {
-                statusDiv.textContent = '⏳ Ожидание разрешения...';
+                statusDiv.innerHTML = '⏳ Ожидание разрешения...<br><small>Нажмите кнопку "Разрешить уведомления"</small>';
+                requestBtn.disabled = false;
+                sendBtn.disabled = true;
                 return false;
             }
         }
 
         // Запрос разрешения на уведомления
         function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                alert('Ваш браузер не поддерживает уведомления');
-                return;
-            }
+            if (!checkNotificationSupport()) return;
 
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                    statusDiv.textContent = '✅ Уведомления разрешены';
+                    statusDiv.innerHTML = '✅ Уведомления разрешены!<br><small>Отправляю тестовое уведомление...</small>';
                     sendBtn.disabled = false;
                     requestBtn.disabled = true;
                     
-                    // Отправляем тестовое уведомление сразу после разрешения
-                    sendNotification();
+                    // Отправляем тестовое уведомление через небольшую задержку
+                    setTimeout(() => {
+                        sendNotification();
+                    }, 500);
                 } else if (permission === 'denied') {
-                    statusDiv.textContent = '❌ Уведомления заблокированы';
+                    statusDiv.innerHTML = '❌ Уведомления заблокированы<br><small>Разблокируйте в настройках браузера</small>';
                     sendBtn.disabled = true;
+                } else {
+                    statusDiv.innerHTML = '⏳ Разрешение не получено<br><small>Попробуйте еще раз</small>';
                 }
             });
         }
 
-        // Отправка тестового уведомления
+        // Отправка простого тестового уведомления (без actions)
         function sendNotification() {
             if (Notification.permission !== 'granted') {
                 alert('Нет разрешения на отправку уведомлений');
                 return;
             }
 
-            // Опции уведомления
-            const options = {
-                body: 'Это тестовое push уведомление!',
-                icon: 'https://via.placeholder.com/128/764ba2/ffffff?text=Push',
-                badge: 'https://via.placeholder.com/32/764ba2/ffffff?text=!',
-                vibrate: [200, 100, 200],
-                tag: 'test-notification',
-                renotify: true,
-                requireInteraction: false,
-                data: {
-                    date: new Date(),
-                    url: window.location.href
-                },
-                actions: [
-                    {
-                        action: 'open',
-                        title: 'Открыть сайт'
-                    },
-                    {
-                        action: 'close',
-                        title: 'Закрыть'
-                    }
-                ]
-            };
+            try {
+                // Простые опции уведомления (без actions для обычных уведомлений)
+                const options = {
+                    body: 'Это тестовое уведомление!',
+                    icon: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'45\' fill=\'%23764ba2\'/%3E%3Ctext x=\'50\' y=\'70\' font-size=\'50\' text-anchor=\'middle\' fill=\'white\'%3E📱%3C/text%3E%3C/svg%3E',
+                    vibrate: [200, 100, 200],
+                    tag: 'test-' + Date.now(),
+                    renotify: true,
+                    silent: false
+                };
 
-            // Создаем и показываем уведомление
-            const notification = new Notification('Привет! 👋', options);
+                // Создаем и показываем уведомление
+                const notification = new Notification('Привет! 👋', options);
 
-            // Обработчики событий уведомления
-            notification.addEventListener('click', () => {
-                console.log('Уведомление нажато');
-                window.focus();
-                notification.close();
-            });
+                // Обработчики событий
+                notification.addEventListener('click', () => {
+                    console.log('Уведомление нажато');
+                    window.focus();
+                    notification.close();
+                    statusDiv.innerHTML = '✅ Уведомление открыто!<br><small>Вы нажали на уведомление</small>';
+                });
 
-            notification.addEventListener('close', () => {
-                console.log('Уведомление закрыто');
-            });
+                notification.addEventListener('close', () => {
+                    console.log('Уведомление закрыто');
+                    statusDiv.innerHTML = '✅ Уведомление закрыто<br><small>Можете отправить еще одно</small>';
+                });
 
-            notification.addEventListener('show', () => {
-                console.log('Уведомление показано');
-            });
+                notification.addEventListener('show', () => {
+                    console.log('Уведомление показано');
+                    statusDiv.innerHTML = '✅ Уведомление отправлено!<br><small>Проверьте экран</small>';
+                });
 
-            notification.addEventListener('error', (err) => {
-                console.error('Ошибка уведомления:', err);
-            });
+                notification.addEventListener('error', (err) => {
+                    console.error('Ошибка уведомления:', err);
+                    statusDiv.innerHTML = '❌ Ошибка при отправке<br><small>Попробуйте еще раз</small>';
+                });
 
-            statusDiv.textContent = '✅ Уведомление отправлено! Проверьте экран.';
-            
-            // Возвращаем статус через 3 секунды
-            setTimeout(() => {
-                checkPermissionStatus();
-            }, 3000);
+            } catch (error) {
+                console.error('Ошибка создания уведомления:', error);
+                statusDiv.innerHTML = '❌ Ошибка: ' + error.message;
+                
+                // Пробуем отправить простое уведомление без опций
+                try {
+                    const simpleNotification = new Notification('Тест');
+                    simpleNotification.addEventListener('click', () => window.focus());
+                    statusDiv.innerHTML = '✅ Отправлено простое уведомление';
+                } catch (e) {
+                    alert('Не удалось отправить уведомление: ' + e.message);
+                }
+            }
         }
 
         // Проверяем статус при загрузке страницы
-        document.addEventListener('DOMContentLoaded', checkPermissionStatus);
-
-        // Дополнительно: демонстрация Service Worker для настоящих push (опционально)
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.register('sw.js').catch(err => {
-                console.log('Service Worker не зарегистрирован (это нормально для демо):', err);
-            });
-        }
-    </script>
-
-    <!-- Простой Service Worker для настоящих push (опционально) -->
-    <script id="sw-script">
-        // Это будет работать только если создать отдельный файл sw.js
-        // Содержимое sw.js:
-        /*
-        self.addEventListener('push', function(event) {
-            const options = {
-                body: event.data ? event.data.text() : 'Новое уведомление',
-                icon: 'icon.png',
-                badge: 'badge.png'
-            };
-            event.waitUntil(
-                self.registration.showNotification('Push уведомление', options)
-            );
+        document.addEventListener('DOMContentLoaded', () => {
+            checkNotificationSupport();
+            checkPermissionStatus();
         });
-        */
+
+        // Обработка клика по кнопке разрешения
+        requestBtn.addEventListener('click', requestNotificationPermission);
+
+        // Убираем регистрацию Service Worker чтобы избежать ошибки 404
+        console.log('✅ Используются простые уведомления (без Service Worker)');
+
     </script>
+
+    <!-- Инструкция по использованию -->
+    <div style="position: fixed; bottom: 10px; left: 10px; right: 10px; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px;">
+        ⚡ Простые push-уведомления | Без сторонних сервисов
+    </div>
 </body>
 </html>
