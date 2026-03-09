@@ -3,464 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Push360 - Тестовый проект twin</title>
+    <title>Service Worker Notifications Demo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         h1 {
             color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 20px;
         }
         
-        .badge {
-            background: #764ba2;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-        
-        .key-info {
-            background: #f5f5f5;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: monospace;
-            font-size: 12px;
-            word-break: break-all;
-        }
-        
-        .key-item {
-            margin-bottom: 15px;
-        }
-        
-        .key-label {
-            color: #666;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-        
-        .key-value {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        
-        .status-panel {
-            background: #e8f4fd;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #e3f2fd;
             border-left: 4px solid #2196F3;
         }
         
-        .status-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #1976D2;
-        }
-        
-        .step {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-        }
-        
-        .step-number {
-            width: 30px;
-            height: 30px;
-            background: #764ba2;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-        
-        .step.completed {
-            background: #e8f5e8;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        .step.completed .step-number {
-            background: #4CAF50;
-        }
-        
-        .step.active {
-            background: #fff3e0;
-            border-left: 4px solid #FF9800;
-        }
-        
-        .button {
-            background: #764ba2;
+        button {
+            background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 5px;
             cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, background 0.2s;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
         }
         
-        .button:hover {
-            background: #5a3b7c;
-            transform: translateY(-2px);
+        button:hover {
+            background-color: #45a049;
         }
         
-        .button:disabled {
-            background: #ccc;
+        button:disabled {
+            background-color: #cccccc;
             cursor: not-allowed;
-            transform: none;
         }
         
-        .log {
-            background: #1e1e1e;
-            color: #0f0;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
+        .permission-status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .granted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .denied {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .prompt {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .notification-list {
             margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .notification-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        
+        .logs {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
             max-height: 200px;
             overflow-y: auto;
-        }
-        
-        .log p {
-            margin: 5px 0;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-        }
-        
-        .user-info {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .user-info input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .user-info input:focus {
-            border-color: #764ba2;
-            outline: none;
-        }
-        
-        .tag {
-            display: inline-block;
-            background: #e0e0e0;
-            padding: 4px 8px;
-            border-radius: 4px;
+            font-family: monospace;
             font-size: 12px;
-            margin: 2px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info {
+            color: #2196F3;
+        }
+        
+        .success {
+            color: #4CAF50;
+        }
+        
+        .error {
+            color: #f44336;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>
-            🚀 Проект: twin
-            <span class="badge">Push360</span>
-        </h1>
+    <div class="container">
+        <h1>🔔 Service Worker Notifications Demo</h1>
         
-        <div class="key-info">
-            <div class="key-item">
-                <div class="key-label">Публичный ключ (API Key)</div>
-                <div class="key-value">pk_M9X8xCdDKpPNhU8Afd3X34TjGTKXGR4M</div>
-            </div>
-            <div class="key-item">
-                <div class="key-label">VAPID Public Key</div>
-                <div class="key-value">BFidPPnL1h1UW7X19KpJnHu_Qn-dJrvP9vkWaR31zFVDYHLoXFvZvh-VaiVJK3W5tDds1HWpovGu61ZtRZ2p55Kw</div>
-            </div>
+        <div class="status" id="swStatus">
+            Проверка Service Worker...
         </div>
         
-        <div class="status-panel">
-            <div class="status-title">📊 Статус подключения</div>
-            <div id="steps">
-                <div class="step" id="step-sdk">
-                    <span class="step-number">1</span>
-                    <span>Загрузка SDK...</span>
-                </div>
-                <div class="step" id="step-sw">
-                    <span class="step-number">2</span>
-                    <span>Проверка Service Worker...</span>
-                </div>
-                <div class="step" id="step-permission">
-                    <span class="step-number">3</span>
-                    <span>Разрешение на уведомления...</span>
-                </div>
-                <div class="step" id="step-subscribe">
-                    <span class="step-number">4</span>
-                    <span>Подписка на push...</span>
-                </div>
-            </div>
+        <div class="permission-status" id="permissionStatus">
+            Проверка разрешений...
         </div>
         
-        <div class="user-info">
-            <input type="text" id="userId" placeholder="ID пользователя (например: user123)" value="test_user_123">
-            <input type="text" id="userTags" placeholder="Теги (через запятую)" value="news,test">
+        <div class="controls">
+            <button id="requestPermissionBtn" disabled>Запросить разрешение на уведомления</button>
+            <button id="showNotificationBtn" disabled>Показать простое уведомление</button>
+            <button id="showTimedNotificationBtn" disabled>Показать уведомление через 5 секунд</button>
+            <button id="showCustomNotificationBtn" disabled>Показать кастомное уведомление</button>
         </div>
         
-        <button class="button" id="initBtn" onclick="initializePush360()">
-            🔔 Подключить push-уведомления
-        </button>
+        <div class="notification-list">
+            <h3>Последние уведомления:</h3>
+            <div id="notifications"></div>
+        </div>
         
-        <div class="log" id="log">
-            <p>📝 Готов к работе...</p>
+        <div class="logs">
+            <h4>Логи:</h4>
+            <div id="logs"></div>
         </div>
     </div>
     
-    <!-- Подключение SDK Push360 -->
-    <script src="https://push360.ru/sdk/push-sdk.js"></script>
-    
-    <script>
-        // Конфигурация проекта twin
-        const PUSH_CONFIG = {
-            apiKey: 'pk_M9X8xCdDKpPNhU8Afd3X34TjGTKXGR4M',
-            vapidPublicKey: 'BFidPPnL1h1UW7X19KpJnHu_Qn-dJrvP9vkWaR31zFVDYHLoXFvZvh-VaiVJK3W5tDds1HWpovGu61ZtRZ2p55Kw',
-            apiUrl: 'https://push360.ru'
-        };
-        
-        // Логирование
-        function addLog(message, type = 'info') {
-            const log = document.getElementById('log');
-            const time = new Date().toLocaleTimeString();
-            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '📌';
-            log.innerHTML = `<p>${icon} [${time}] ${message}</p>` + log.innerHTML;
-        }
-        
-        // Обновление статуса шагов
-        function updateStep(stepId, status) {
-            const step = document.getElementById(stepId);
-            step.className = 'step ' + status;
-            
-            if (status === 'completed') {
-                const number = step.querySelector('.step-number');
-                number.innerHTML = '✓';
-            }
-        }
-        
-        // Проверка наличия Service Worker
-        async function checkServiceWorker() {
-            addLog('Проверка Service Worker...');
-            
-            if ('serviceWorker' in navigator) {
-                try {
-                    // Пробуем зарегистрировать Service Worker из SDK
-                    const registration = await navigator.serviceWorker.register('/sw.js', {
-                        scope: '/'
-                    });
-                    
-                    addLog('Service Worker зарегистрирован успешно', 'success');
-                    updateStep('step-sw', 'completed');
-                    
-                    // Ждем активации
-                    await navigator.serviceWorker.ready;
-                    addLog('Service Worker активирован', 'success');
-                    
-                    return true;
-                } catch (error) {
-                    addLog(`Ошибка регистрации Service Worker: ${error.message}`, 'error');
-                    updateStep('step-sw', 'active');
-                    return false;
-                }
-            } else {
-                addLog('Service Worker не поддерживается браузером', 'error');
-                return false;
-            }
-        }
-        
-        // Инициализация PushSDK
-        async function initializePush360() {
-            const initBtn = document.getElementById('initBtn');
-            const userId = document.getElementById('userId').value.trim();
-            const userTags = document.getElementById('userTags').value.split(',').map(t => t.trim()).filter(t => t);
-            
-            if (!userId) {
-                alert('Введите ID пользователя');
-                return;
-            }
-            
-            initBtn.disabled = true;
-            initBtn.textContent = '⏳ Инициализация...';
-            
-            addLog('🚀 Запуск инициализации Push360');
-            addLog(`👤 Пользователь: ${userId}`);
-            addLog(`🏷️ Теги: ${userTags.join(', ') || 'нет'}`);
-            
-            updateStep('step-sdk', 'active');
-            
-            try {
-                // Проверяем загрузку SDK
-                if (typeof PushSDK === 'undefined') {
-                    addLog('Ожидание загрузки SDK...');
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-                
-                if (typeof PushSDK === 'undefined') {
-                    throw new Error('SDK не загрузился');
-                }
-                
-                addLog('SDK загружен', 'success');
-                updateStep('step-sdk', 'completed');
-                
-                // Проверяем Service Worker
-                await checkServiceWorker();
-                
-                // Проверяем поддержку уведомлений
-                if (!('Notification' in window)) {
-                    throw new Error('Браузер не поддерживает уведомления');
-                }
-                
-                updateStep('step-permission', 'active');
-                
-                // Инициализация PushSDK
-                addLog('Инициализация PushSDK...');
-                
-                PushSDK.init({
-                    apiKey: PUSH_CONFIG.apiKey,
-                    vapidPublicKey: PUSH_CONFIG.vapidPublicKey,
-                    serviceWorkerPath: '/sw.js',
-                    apiUrl: PUSH_CONFIG.apiUrl,
-                    userId: userId,
-                    tags: userTags,
-                    debug: true,
-                    autoSubscribe: true
-                });
-                
-                addLog('PushSDK инициализирован', 'success');
-                
-                // Проверяем статус разрешения
-                if (Notification.permission === 'granted') {
-                    updateStep('step-permission', 'completed');
-                    updateStep('step-subscribe', 'completed');
-                    addLog('✅ Уведомления уже разрешены', 'success');
-                } else if (Notification.permission === 'denied') {
-                    updateStep('step-permission', 'active');
-                    addLog('❌ Уведомления заблокированы', 'error');
-                } else {
-                    updateStep('step-permission', 'active');
-                    addLog('⏳ Ожидание разрешения пользователя...');
-                }
-                
-                // Слушаем события подписки
-                document.addEventListener('push-subscribed', (e) => {
-                    updateStep('step-subscribe', 'completed');
-                    addLog('✅ Подписка на push выполнена!', 'success');
-                    initBtn.textContent = '✅ Подключено';
-                });
-                
-                document.addEventListener('push-error', (e) => {
-                    addLog(`❌ Ошибка: ${e.detail}`, 'error');
-                });
-                
-            } catch (error) {
-                addLog(`❌ Ошибка: ${error.message}`, 'error');
-                initBtn.disabled = false;
-                initBtn.textContent = '🔔 Подключить push-уведомления';
-            }
-        }
-        
-        // Автоматическая проверка при загрузке
-        document.addEventListener('DOMContentLoaded', () => {
-            addLog('📱 Проект twin (Push360) готов к настройке');
-            addLog('🔑 Публичный ключ: ' + PUSH_CONFIG.apiKey);
-            
-            // Проверяем статус уведомлений
-            if (Notification.permission === 'granted') {
-                updateStep('step-permission', 'completed');
-                addLog('✅ Уведомления уже разрешены', 'success');
-            }
-            
-            // Проверяем наличие Service Worker
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistration('/sw.js').then(registration => {
-                    if (registration) {
-                        updateStep('step-sw', 'completed');
-                        addLog('✅ Service Worker уже зарегистрирован', 'success');
-                    }
-                });
-            }
-        });
-    </script>
-    
-    <!-- Инструкция по созданию Service Worker -->
-    <script>
-        // Этот код создаст sw.js если его нет
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Проверяем существование sw.js
-                fetch('/sw.js').catch(() => {
-                    addLog('⚠️ Service Worker не найден. Создайте файл sw.js в корне сайта:', 'error');
-                    console.log(`
-// Service Worker для push-уведомлений Push360
-self.addEventListener('push', function(event) {
-  var data = event.data ? event.data.json() : {};
-  
-  var options = {
-    body: data.body || '',
-    icon: data.icon || '/favicon.ico',
-    badge: data.badge,
-    image: data.image,
-    data: data.data || { url: '/' }
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Уведомление', options)
-  );
-});
-
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  var data = event.notification.data || {};
-  event.waitUntil(clients.openWindow(data.url || '/'));
-});
-                    `);
-                });
-            });
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
